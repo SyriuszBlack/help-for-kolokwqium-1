@@ -1,0 +1,63 @@
+A-
+mkdir raporty
+grep '^ERROR;' dane/*.log | sort > raporty/bledy.txt
+wc -l < raporty/bledy.txt > raporty/ile_bledow.txt
+B-
+chmod 750 src/analiza.sh
+stat -c '%a' src/analiza.sh > raporty/uprawnienia.txt
+tar -czf raporty/oddanie.tar.gz dane/ src/ README.md
+C-
+nano src/analiza.sh
+( w tych notatkach skpoiuj to):
+ #!/bin/bash
+
+katalog=${1:-dane}
+
+if [ ! -d "$katalog" ]; then
+    echo "Nie istnieje taki katalog" >&2
+    exit 2
+fi
+
+(poza plikiem): 
+bash src/analiza.sh /nieistniejacy_katalog
+(pozniej w tym pliku na koniec to):
+for plik in "$katalog"/*.log; do
+    if [ -f "$plik" ]; then
+        bledy=$(grep -c '^ERROR;' "$plik")
+        echo "${plik##*/};$bledy;OK"
+    fi
+done
+
+pozniej zmienic ten drugi kod na ten w pliku:
+for plik in "$katalog"/*.log; do
+    if [ -f "$plik" ]; then
+        bledy=$(grep -c '^ERROR;' "$plik")
+        warn=$(grep -c '^WARN;' "$plik")
+
+        if [ "$warn" -ge 2 ]; then
+            status="ALARM"
+        else
+            status="OK"
+        fi
+
+        echo "${plik##*/};$bledy;$status"
+    fi
+done
+
+bash src/analiza.sh dane (po wyjsciu)
+
+D-
+git add raporty/
+git add src/analiza.sh
+git commit -m "Dodanie raportow i ustawienie uprawnien"
+(po a i b)
+
+git add src/analiza.sh
+git commit -m "Uzupelnienie skryptu analizy logow"
+(po c)
+
+git log --oneline
+
+git push
+git push -u origin HEAD
+
